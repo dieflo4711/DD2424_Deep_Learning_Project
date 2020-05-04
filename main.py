@@ -155,9 +155,6 @@ if __name__ == "__main__":
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = resnet18(3, 200).to(device)
-    for data in test_loader:
-        images, labels = data
-        print(images.shape)
 
     train_model(net, train_loader, val_loader, trainset, valset)
     #load_saved_model(net)
