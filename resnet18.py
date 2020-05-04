@@ -147,10 +147,12 @@ class ResNet(nn.Module):
 		super().__init__()
 		self.encoder = ResNetEncoder(in_channels, *args, **kwargs)
 		self.decoder = ResnetDecoder(self.encoder.blocks[-1].blocks[-1].expanded_channels, n_classes)
-	    
+		self.softmax = nn.Softmax(dim=1)
+
 	def forward(self, x):
 		x = self.encoder(x)
 		x = self.decoder(x)
+		#x = self.softmax(x)
 		return x
 
 def resnet18(in_channels, n_classes):
