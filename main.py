@@ -32,7 +32,7 @@ def load_saved_model(net):
 
 def plot_graph(train_loss, val_loss, train_acc, val_acc):
     epochs_axis = np.arange(epochs) + 1
-    plt.figure(1)
+    fig1 = plt.figure(1)
     plt.title("Training & validation loss")
     plt.plot(epochs_axis, train_loss, label="train")
     plt.plot(epochs_axis, val_loss, label="val")
@@ -41,14 +41,16 @@ def plot_graph(train_loss, val_loss, train_acc, val_acc):
     plt.legend(loc='upper left')
     plt.ylabel("loss")
     plt.xlabel("epoch")
-    plt.figure(2)
+    fig2 = plt.figure(2)
     plt.title("Training & validation accuracy")
     plt.plot(epochs_axis, train_acc, label="train")
     plt.plot(epochs_axis, val_acc, label="val")
     plt.legend(loc='upper left')
     plt.ylabel("accuracy")
     plt.xlabel("epoch")
-    plt.show()
+    # plt.show()
+    fig1.savefig('figs/loss.png')
+    fig2.savefig('figs/accur.png')
 
 def test_model(net, testloader):
     print('Testing model...')
@@ -94,7 +96,7 @@ def train_model(net, train_loader, val_loader, trainset, valset):
             running_acc = 0.0
 
             for i, data in enumerate(loader, 1):
-                print(str(i) + " of " + str(len(train_loader)) + " epoch: " + str(str(epoch + 1)))
+                # print(str(i) + " of " + str(len(train_loader)) + " epoch: " + str(str(epoch + 1)))
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
                 inputs = inputs.to(device)
@@ -131,7 +133,7 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 # Global variables
-dataset_dir = './data/tiny-imagenet-200/'
+dataset_dir = './tiny-imagenet-200/'
 model_dir = './model/net.pth'
 epochs = 10
 eta = 0.001
