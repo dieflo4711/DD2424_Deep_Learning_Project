@@ -148,9 +148,30 @@ def train_model(net, train_loader, val_loader, trainset, valset):
     plot_graph(train_loss, val_loss, train_acc, val_acc)
 
 
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    normalize])
+
+transform_2 = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    normalize
+    ])
+
+transform_3 = transforms.Compose([
+    transforms.RandomResizedCrop(64),
+    transforms.ToTensor(),
+    normalize
+    ])
+
+transform_4 = transforms.Compose([
+    transforms.RandomResizedCrop(64),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    normalize
+    ])
 
 # Global variables
 dataset_dir = './data/tiny-imagenet-200/'
@@ -174,7 +195,17 @@ if __name__ == "__main__":
     #trainset, _ = torch.utils.data.random_split(trainset, [1000, len(trainset) - 1000])
     #valset, _ = torch.utils.data.random_split(valset, [500, len(valset) - 500])
     # testset, _ = torch.utils.data.random_split(testset, [500, len(testset) - 500])
-    train_loader = data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
+    
+    #train_loader = data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
+    
+    train_loader = data.DataLoader(
+        data.ConcatDataset([
+            ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform),
+            ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform_2),
+            ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform_3),
+            ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform_4)
+            ]), batch_size=batch_size, shuffle=True)
+
     val_loader = data.DataLoader(valset, batch_size=batch_size, shuffle=False)
     # test_loader = data.DataLoader(testset, batch_size=batch_size, shuffle=False)
     print("Done reading")
