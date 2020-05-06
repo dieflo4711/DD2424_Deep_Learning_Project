@@ -1,15 +1,14 @@
 import os
 import torch
 import torch.nn as nn
-import torchvision
 import torchvision.datasets as datasets
 import torch.utils.data as data
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import torch.optim as optim
 import numpy as np
+import mapping as mp
 from resnet18 import resnet18
-
 
 class ImageFolderWithPaths(datasets.ImageFolder):
     """Custom dataset that includes image file paths. Extends torchvision.datasets.ImageFolder """
@@ -23,23 +22,6 @@ class ImageFolderWithPaths(datasets.ImageFolder):
         # make a new tuple that includes original and the path
         tuple_with_path = (original_tuple + (file_name,))
         return tuple_with_path
-
-
-def get_file_to_nnumber(filepath):
-    valmapping = {}
-    with open(filepath) as f:
-        for line in f:
-            info = line.split('	')
-            valmapping[info[0]] = info[1]  # val_XXX.JPEG: nnumber
-        return valmapping
-
-
-def get_labels(labels, file_names, valmapping, nnumber_to_idx):
-    for i in range(len(labels)):
-        nnumber = valmapping[file_names[i]]
-        labels[i] = nnumber_to_idx[nnumber]
-    return labels
-
 
 def load_saved_model(net):
     net.load_state_dict(torch.load(model_dir))
@@ -56,6 +38,7 @@ def plot_graph(train_loss, val_loss, train_acc, val_acc):
     plt.legend(loc='upper left')
     plt.ylabel("loss")
     plt.xlabel("epoch")
+    plt.savefig('loss_plot.png')
     plt.figure(2)
     plt.title("Training & validation accuracy")
     plt.plot(epochs_axis, train_acc, label="train")
@@ -63,7 +46,8 @@ def plot_graph(train_loss, val_loss, train_acc, val_acc):
     plt.legend(loc='upper left')
     plt.ylabel("accuracy")
     plt.xlabel("epoch")
-    plt.show()
+    plt.savefig('acc_plot.png')
+    #plt.show()
 
 
 def test_model(net, testloader):
@@ -73,8 +57,9 @@ def test_model(net, testloader):
     total = 0
     with torch.no_grad():
         for data in testloader:
+            #images, labels = data
             images, labels, file_names = data
-            labels = get_labels(labels, file_names, valmapping, nnumber_to_idx)
+            labels = mp.get_labels(labels, file_names, valmapping, nnumber_to_idx)
             images = images.to(device)
             labels = labels.to(device)
             outputs = net(images)
@@ -86,14 +71,15 @@ def test_model(net, testloader):
             100 * correct / total))
 
 
-def train_model(net, train_loader, val_loader, trainset, valset):
+def train_model(net, train_loader, val_loader, trainset, valset, valmapping, nnumber_to_idx):
     train_loss = np.zeros(epochs)
     train_acc = np.zeros(epochs)
     val_loss = np.zeros(epochs)
     val_acc = np.zeros(epochs)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=eta, momentum=momentum)
+    #optimizer = optim.SGD(net.parameters(), lr=eta, momentum=momentum)
+    optimizer = optim.Adam(net.parameters(), lr=eta, weight_decay=weight_decay)
 
     print("Started training...")
     for epoch in range(epochs):
@@ -112,12 +98,12 @@ def train_model(net, train_loader, val_loader, trainset, valset):
             running_acc = 0
 
             for i, data in enumerate(loader, 1):
-                print(str(i) + " of " + str(len(train_loader)) + " epoch: " + str(str(epoch + 1)))
+                print(str(i) + " of " + str(len(loader)) + " epoch: " + str(str(epoch + 1)))
                 # get the inputs; data is a list of [inputs, labels]
                 #inputs, labels = data
                 inputs, labels, file_names = data
                 if phase == 'val':
-                    labels = get_labels(labels, file_names, valmapping, nnumber_to_idx)
+                    labels = mp.get_labels(labels, file_names, valmapping, nnumber_to_idx)
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -137,8 +123,8 @@ def train_model(net, train_loader, val_loader, trainset, valset):
                 running_loss += loss.item() * inputs.size(0)
                 running_acc += torch.sum(acc_index == labels.data)
             if phase == 'train':
-                train_loss[epoch] = running_loss / len(trainset)
-                train_acc[epoch] = running_acc.double() / len(trainset)
+                train_loss[epoch] = running_loss / len(trainset) * 4
+                train_acc[epoch] = running_acc.double() / len(trainset) * 4
             else:
                 val_loss[epoch] = running_loss / len(valset)
                 val_acc[epoch] = running_acc.double() / len(valset)
@@ -147,6 +133,10 @@ def train_model(net, train_loader, val_loader, trainset, valset):
     torch.save(net.state_dict(), model_dir)
     plot_graph(train_loss, val_loss, train_acc, val_acc)
 
+
+#transform = transforms.Compose(
+#    [transforms.ToTensor(),
+#     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 
@@ -175,56 +165,49 @@ transform_4 = transforms.Compose([
 
 # Global variables
 dataset_dir = './data/tiny-imagenet-200/'
+#dataset_dir = '../sjonsson123/tiny-imagenet-200/'
 model_dir = './model/net.pth'
 epochs = 10
-eta = 0.001
-momentum = 0.9
+eta = pow(10, -4)
+#momentum = 0.9
+weight_decay = pow(10, -4)
 batch_size = 256
 
 if __name__ == "__main__":
     print("Reading data...")
     trainset = ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform)
     valset = ImageFolderWithPaths(os.path.join(dataset_dir, 'val'), transform=transform)
-    # testset = datasets.ImageFolder(os.path.join(dataset_dir, 'test'), transform=transform)
 
-    # trainset = CIFAR10(root='./data', train=True, download=True, transform=transform)
-    # trainset, valset = torch.utils.data.random_split(trainset, [45000, 5000])
-    # testset = CIFAR10(root='./data', train=False, download=True, transform=transform)
+    #trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    #trainset, valset = torch.utils.data.random_split(trainset, [45000, 5000])
+    #testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-    # Reduce trainset & valiset for debugging
     #trainset, _ = torch.utils.data.random_split(trainset, [1000, len(trainset) - 1000])
     #valset, _ = torch.utils.data.random_split(valset, [500, len(valset) - 500])
-    # testset, _ = torch.utils.data.random_split(testset, [500, len(testset) - 500])
-    
+    #testset, _ = torch.utils.data.random_split(testset, [500, len(testset) - 500])
+
     #train_loader = data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
-    
+
     train_loader = data.DataLoader(
         data.ConcatDataset([
             ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform),
             ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform_2),
             ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform_3),
             ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform_4)
-            ]), batch_size=batch_size, shuffle=True)
+        ]), batch_size=batch_size, shuffle=True)
 
     val_loader = data.DataLoader(valset, batch_size=batch_size, shuffle=False)
-    # test_loader = data.DataLoader(testset, batch_size=batch_size, shuffle=False)
+    #test_loader = data.DataLoader(testset, batch_size=batch_size, shuffle=False)
     print("Done reading")
 
     nnumber_to_idx = dict(zip(trainset.classes, np.arange(len(trainset.classes))))
-    valmapping = get_file_to_nnumber(dataset_dir + 'val/val_annotations.txt')
+    valmapping = mp.get_file_to_nnumber(dataset_dir + 'val/val_annotations.txt')
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = resnet18(3, 200).to(device)
+    #net = resnet18(3, 10).to(device)
 
-    # print(dict([(value, key) for key, value in dict(trainset.classes).items()]))
-    #for data in val_loader:
-    #    images, labels, file_names = data
-    #    labels = get_labels(labels, file_names, valmapping, nnumber_to_idx)
-    #    print(labels)
-    #    break
-
-
-    train_model(net, train_loader, val_loader, trainset, valset)
-    # load_saved_model(net)
-    # test_model(net, test_loader)
+    train_model(net, train_loader, val_loader, trainset, valset, valmapping, nnumber_to_idx)
+    #load_saved_model(net)
     test_model(net, val_loader)
+    #test_model(net, test_loader)

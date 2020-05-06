@@ -5,7 +5,6 @@ from functools import partial
 from dataclasses import dataclass
 from collections import OrderedDict
 from torchvision import models
-from torchsummary import summary
 
 # Basic Block
 class Conv2dAuto(nn.Conv2d):
