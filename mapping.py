@@ -67,18 +67,31 @@ def val_images(dataloader, dataset, mapping, valmapping):
 		print(f'file_name: {file_name}, nnumber: {nnumber}, name: {name}')
 	imshow(torchvision.utils.make_grid(images))
 
+normalize = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+
+transform = transforms.Compose([
+	transforms.RandomResizedCrop(224),
+	transforms.RandomHorizontalFlip(),
+	transforms.ToTensor(),
+	normalize
+	])
 
 if __name__ == "__main__":
+	net = Net()
+	criterion = nn.CrossEntropyLoss()
+	optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 	dataset_dir = 'tiny-imagenet-200/'
 
-	trainset = ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transforms.ToTensor())
-	trainloader = data.DataLoader(trainset, batch_size=5, shuffle=True)
+	trainset = ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform)
+	trainloader = data.DataLoader(trainset, batch_size=5, shuffle=False)
 	
-	valset = ImageFolderWithPaths(os.path.join(dataset_dir, 'val'), transforms.ToTensor())
+	valset = ImageFolderWithPaths(os.path.join(dataset_dir, 'val'), transform=transform)
 	valloader = data.DataLoader(valset, batch_size=5, shuffle=True)
 
 	mapping = get_nnumber_to_name(dataset_dir + 'words.txt')
-	valmapping = get_file_to_nnumber(dataset_dir + 'val/val_annotations.txt')
+	#valmapping = get_file_to_nnumber(dataset_dir + 'val/val_annotations.txt')
 
-	val_images(valloader, valset, mapping, valmapping)
-	#train_images(trainloader, trainset, mapping)
+
+	#val_images(valloader, valset, mapping, valmapping)
+	train_images(trainloader, trainset, mapping)
+	train_images(trainloader, trainset, mapping)
