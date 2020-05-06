@@ -162,6 +162,3 @@ def resnet18(in_channels, n_classes):
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #model = models.vgg16().to(device)
-
-
-
