@@ -163,6 +163,11 @@ transform_4 = transforms.Compose([
     normalize
     ])
 
+transform_5 = transforms.Compose([
+    transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0),
+    transforms.ToTensor(),
+    normalize])
+
 # Global variables
 dataset_dir = './data/tiny-imagenet-200/'
 #dataset_dir = '../sjonsson123/tiny-imagenet-200/'
