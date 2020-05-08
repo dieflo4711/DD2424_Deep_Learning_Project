@@ -182,6 +182,7 @@ if __name__ == "__main__":
     print("Reading data...")
     trainset = ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform)
     valset = ImageFolderWithPaths(os.path.join(dataset_dir, 'val'), transform=transform)
+    valset, testset = data.random_split(valset, [5000, 5000])
 
     #trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
     #trainset, valset = torch.utils.data.random_split(trainset, [45000, 5000])
@@ -202,6 +203,7 @@ if __name__ == "__main__":
         ]), batch_size=batch_size, shuffle=True)
 
     val_loader = data.DataLoader(valset, batch_size=batch_size, shuffle=False)
+
     #test_loader = data.DataLoader(testset, batch_size=batch_size, shuffle=False)
     print("Done reading")
 
