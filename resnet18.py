@@ -12,7 +12,7 @@ class Conv2dAuto(nn.Conv2d):
 		super().__init__(*args, **kwargs)
 		self.padding =  (self.kernel_size[0] // 2, self.kernel_size[1] // 2) # dynamic add padding based on the kernel_size
 
-conv3x3 = partial(Conv2dAuto, kernel_size=3, bias=False)  
+conv3x3 = partial(Conv2dAuto, kernel_size=3, bias=False)
 conv = conv3x3(in_channels=32, out_channels=64)
 
 # Residual Block
@@ -21,7 +21,7 @@ class ResidualBlock(nn.Module):
 		super().__init__()
 		self.in_channels, self.out_channels =  in_channels, out_channels
 		self.blocks = nn.Identity()
-		self.shortcut = nn.Identity()   
+		self.shortcut = nn.Identity()
 
 	def forward(self, x):
 		residual = x
@@ -96,7 +96,7 @@ class ResNetLayer(nn.Module):
 # Encoder
 class ResNetEncoder(nn.Module):
 	""" ResNet encoder composed by increasing different layers with increasing features."""
-	def __init__(self, in_channels=3, blocks_sizes=[64, 128, 256, 512], deepths=[2,2,2,2], 
+	def __init__(self, in_channels=3, blocks_sizes=[64, 128, 256, 512], deepths=[2,2,2,2],
 				activation=nn.ReLU, block=ResNetBasicBlock, *args,**kwargs):
 		super().__init__()
 
@@ -110,10 +110,10 @@ class ResNetEncoder(nn.Module):
 		)
 
 		self.in_out_block_sizes = list(zip(blocks_sizes, blocks_sizes[1:]))
-		self.blocks = nn.ModuleList([ 
+		self.blocks = nn.ModuleList([
 			ResNetLayer(blocks_sizes[0], blocks_sizes[0], n=deepths[0], activation=activation, block=block,  *args, **kwargs),
-			*[ResNetLayer(in_channels * block.expansion, out_channels, n=n, activation=activation, block=block, *args, **kwargs) 
-				for (in_channels, out_channels), n in zip(self.in_out_block_sizes, deepths[1:])]       
+			*[ResNetLayer(in_channels * block.expansion, out_channels, n=n, activation=activation, block=block, *args, **kwargs)
+				for (in_channels, out_channels), n in zip(self.in_out_block_sizes, deepths[1:])]
 		])
 
 
@@ -162,3 +162,6 @@ def resnet18(in_channels, n_classes):
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #model = models.vgg16().to(device)
+
+
+
