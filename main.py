@@ -178,6 +178,7 @@ use_imageNet = True
 def tiny_imagenet(overfit=False, augment=False):
     trainset = ImageFolderWithPaths(os.path.join(dataset_dir, 'train'), transform=transform)
     valset = ImageFolderWithPaths(os.path.join(dataset_dir, 'val'), transform=transform)
+
     if overfit:
         trainset, _ = torch.utils.data.random_split(trainset, [500, len(trainset)-500])
         nnumber_to_idx = dict(zip(trainset.dataset.classes, np.arange(len(trainset.dataset.classes))))
@@ -210,7 +211,6 @@ def cifar_10():
     testloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
     model = resnet18(3, 10)
     return model, trainloader, valloader, testloader
-
 
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
